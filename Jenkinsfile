@@ -2,15 +2,15 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'your_dockerhub_username/your_image_name'
-        DOCKER_REGISTRY_CREDENTIALS_ID = 'your-credentials-id'
+        DOCKER_IMAGE = 'batsukh/jenkins'
+        DOCKER_REGISTRY_CREDENTIALS_ID = '123'
     }
 
     stages {
         stage('Checkout') {
             steps {
                 // Checkout the repository
-                git branch: 'main', url: 'https://github.com/your_username/your_repo.git'
+                git branch: 'main', url: 'https://github.com/batsukh12/jenkins.git'
             }
         }
         
