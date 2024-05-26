@@ -17,7 +17,7 @@ pipeline {
             steps {
                 script {
                     try {
-                        def customImage = docker.build("${env.DOCKER_IMAGE}:${env.BUILD_ID}")
+                        docker.build("${env.DOCKER_IMAGE}:${env.BUILD_ID}")
                     } catch (Exception e) {
                         echo "Error during Docker build: ${e.getMessage()}"
                         currentBuild.result = 'FAILURE'
