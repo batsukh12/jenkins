@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'batsukh/nodejs-app'
-        DOCKER_REGISTRY_CREDENTIALS_ID = '123'
+        DOCKER_IMAGE = 'batsukh12/archilgaa'
+        DOCKER_REGISTRY_CREDENTIALS_ID = 'dockerHub'
     }
 
     stages {
