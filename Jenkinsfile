@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = 'batsukh12/archilgaa'
+        DOCKER_TAG = '1.0'
         DOCKER_REGISTRY = 'https://index.docker.io/v1/'
         DOCKER_REGISTRY_CREDENTIALS_ID = 'dockerHub'
     }
@@ -22,8 +23,8 @@ pipeline {
                 script {
                     try {
                         echo "Building Docker image..."
-                        def customImage = docker.build("${DOCKER_IMAGE}:${env.BUILD_ID}")
-                        echo "Docker image ${DOCKER_IMAGE}:${env.BUILD_ID} built successfully."
+                        def customImage = docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                        echo "Docker image ${DOCKER_IMAGE}:${DOCKER_TAG} built successfully."
                     } catch (Exception e) {
                         echo "Error during Docker build: ${e.getMessage()}"
                         currentBuild.result = 'FAILURE'
@@ -39,8 +40,8 @@ pipeline {
                     try {
                         echo "Pushing Docker image to registry..."
                         withCredentials([usernamePassword(credentialsId: env.DOCKER_REGISTRY_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                            sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin ${DOCKER_REGISTRY}"
-                            sh "docker push ${DOCKER_IMAGE}:${env.BUILD_ID}"
+                            sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}"
+                            sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
                             sh "docker logout ${DOCKER_REGISTRY}"
                         }
                         echo "Docker image pushed successfully."
@@ -61,7 +62,7 @@ pipeline {
                         sh """
                         docker stop nodejs-app-container || true
                         docker rm nodejs-app-container || true
-                        docker run -d --name nodejs-app-container -p 3000:3000 ${DOCKER_IMAGE}:${env.BUILD_ID}
+                        docker run -d --name nodejs-app-container -p 3000:3000 ${DOCKER_IMAGE}:${DOCKER_TAG}
                         """
                         echo "Docker container deployed successfully."
                     } catch (Exception e) {
