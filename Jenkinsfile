@@ -3,13 +3,17 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = 'batsukh12/archilgaa'
-        DOCKER_REGISTRY_CREDENTIALS_ID = 'dockerHub'
+        DOCKER_REGISTRY = 'https://index.docker.io/v1/'
+        DOCKER_REGISTRY_CREDENTIALS_ID = 'dockerHub' // Your Jenkins credentials ID for Docker Hub
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/batsukh12/jenkins.git'
+                script {
+                    echo "Checking out the repository..."
+                    git branch: 'main', url: 'https://github.com/batsukh12/jenkins.git'
+                }
             }
         }
 
@@ -17,7 +21,9 @@ pipeline {
             steps {
                 script {
                     try {
-                        docker.build("${env.DOCKER_IMAGE}:${env.BUILD_ID}")
+                        echo "Building Docker image..."
+                        def customImage = docker.build("${DOCKER_IMAGE}:${env.BUILD_ID}")
+                        echo "Docker image ${DOCKER_IMAGE}:${env.BUILD_ID} built successfully."
                     } catch (Exception e) {
                         echo "Error during Docker build: ${e.getMessage()}"
                         currentBuild.result = 'FAILURE'
@@ -31,9 +37,13 @@ pipeline {
             steps {
                 script {
                     try {
-                        docker.withRegistry('https://index.docker.io/v1/', env.DOCKER_REGISTRY_CREDENTIALS_ID) {
-                            docker.image("${env.DOCKER_IMAGE}:${env.BUILD_ID}").push()
+                        echo "Pushing Docker image to registry..."
+                        withCredentials([usernamePassword(credentialsId: env.DOCKER_REGISTRY_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                            sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin ${DOCKER_REGISTRY}"
+                            docker.image("${DOCKER_IMAGE}:${env.BUILD_ID}").push()
+                            sh "docker logout ${DOCKER_REGISTRY}"
                         }
+                        echo "Docker image pushed successfully."
                     } catch (Exception e) {
                         echo "Error during Docker push: ${e.getMessage()}"
                         currentBuild.result = 'FAILURE'
@@ -47,11 +57,13 @@ pipeline {
             steps {
                 script {
                     try {
+                        echo "Deploying Docker container..."
                         sh """
                         docker stop nodejs-app-container || true
                         docker rm nodejs-app-container || true
-                        docker run -d --name nodejs-app-container -p 3000:3000 ${env.DOCKER_IMAGE}:${env.BUILD_ID}
+                        docker run -d --name nodejs-app-container -p 3000:3000 ${DOCKER_IMAGE}:${env.BUILD_ID}
                         """
+                        echo "Docker container deployed successfully."
                     } catch (Exception e) {
                         echo "Error during Docker deploy: ${e.getMessage()}"
                         currentBuild.result = 'FAILURE'
@@ -66,7 +78,9 @@ pipeline {
         always {
             script {
                 try {
+                    echo "Cleaning up Docker system..."
                     sh 'docker system prune -af'
+                    echo "Docker system cleanup completed."
                 } catch (Exception e) {
                     echo "Error during Docker system prune: ${e.getMessage()}"
                 }
