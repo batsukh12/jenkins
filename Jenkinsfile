@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'batsukh12/archilgaa'
         DOCKER_REGISTRY = 'https://index.docker.io/v1/'
-        DOCKER_REGISTRY_CREDENTIALS_ID = 'dockerHub' // Your Jenkins credentials ID for Docker Hub
+        DOCKER_REGISTRY_CREDENTIALS_ID = 'dockerHub'
     }
 
     stages {
@@ -40,7 +40,7 @@ pipeline {
                         echo "Pushing Docker image to registry..."
                         withCredentials([usernamePassword(credentialsId: env.DOCKER_REGISTRY_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                             sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin ${DOCKER_REGISTRY}"
-                            docker.image("${DOCKER_IMAGE}:${env.BUILD_ID}").push()
+                            sh "docker push ${DOCKER_IMAGE}:${env.BUILD_ID}"
                             sh "docker logout ${DOCKER_REGISTRY}"
                         }
                         echo "Docker image pushed successfully."
