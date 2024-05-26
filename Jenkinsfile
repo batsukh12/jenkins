@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'batsukh/jenkins-app'
+        DOCKER_IMAGE = 'batsukh/nodejs-app'
         DOCKER_REGISTRY_CREDENTIALS_ID = '123'
     }
 
@@ -16,7 +16,13 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    def customImage = docker.build("${env.DOCKER_IMAGE}:${env.BUILD_ID}")
+                    try {
+                        def customImage = docker.build("${env.DOCKER_IMAGE}:${env.BUILD_ID}")
+                    } catch (Exception e) {
+                        echo "Error during Docker build: ${e.getMessage()}"
+                        currentBuild.result = 'FAILURE'
+                        error("Build failed")
+                    }
                 }
             }
         }
@@ -24,8 +30,14 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', env.DOCKER_REGISTRY_CREDENTIALS_ID) {
-                        docker.image("${env.DOCKER_IMAGE}:${env.BUILD_ID}").push()
+                    try {
+                        docker.withRegistry('https://index.docker.io/v1/', env.DOCKER_REGISTRY_CREDENTIALS_ID) {
+                            docker.image("${env.DOCKER_IMAGE}:${env.BUILD_ID}").push()
+                        }
+                    } catch (Exception e) {
+                        echo "Error during Docker push: ${e.getMessage()}"
+                        currentBuild.result = 'FAILURE'
+                        error("Push failed")
                     }
                 }
             }
@@ -34,11 +46,17 @@ pipeline {
         stage('Deploy Docker Container') {
             steps {
                 script {
-                    sh """
-                    docker stop jenkins-app-container || true
-                    docker rm jenkins-app-container || true
-                    docker run -d --name jenkins-app-container -p 80:80 ${env.DOCKER_IMAGE}:${env.BUILD_ID}
-                    """
+                    try {
+                        sh """
+                        docker stop nodejs-app-container || true
+                        docker rm nodejs-app-container || true
+                        docker run -d --name nodejs-app-container -p 3000:3000 ${env.DOCKER_IMAGE}:${env.BUILD_ID}
+                        """
+                    } catch (Exception e) {
+                        echo "Error during Docker deploy: ${e.getMessage()}"
+                        currentBuild.result = 'FAILURE'
+                        error("Deploy failed")
+                    }
                 }
             }
         }
@@ -46,7 +64,13 @@ pipeline {
 
     post {
         always {
-            sh 'docker system prune -af'
+            script {
+                try {
+                    sh 'docker system prune -af'
+                } catch (Exception e) {
+                    echo "Error during Docker system prune: ${e.getMessage()}"
+                }
+            }
         }
     }
 }
