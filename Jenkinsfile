@@ -6,7 +6,7 @@ pipeline {
         DOCKER_TAG = '1.0'
         DOCKER_REGISTRY = 'https://index.docker.io/v1/'
         DOCKER_REGISTRY_CREDENTIALS_ID = 'dockerHub'  // Ensure this matches your Jenkins credentials ID
-        REMOTE_DOCKER_SERVER_IP = '10.0.2.15'  // Replace with your remote Docker server IP
+        REMOTE_DOCKER_SERVER_IP = '192.168.100.5'  // Replace with your remote Docker server IP
         REMOTE_DOCKER_SERVER_CREDENTIALS_ID = 'docker'  // Ensure this matches your SSH credentials ID
     }
 
